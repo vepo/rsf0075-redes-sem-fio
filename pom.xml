@@ -19,8 +19,8 @@
             <version>21-ea+21</version>
         </dependency>
         <dependency>
-            <groupId>com.brunomnsilva</groupId>
-            <artifactId>smartgraph</artifactId>
+            <groupId>dev.vepo</groupId>
+            <artifactId>openjfx-graph</artifactId>
             <version>1.0.0</version>
         </dependency>
 

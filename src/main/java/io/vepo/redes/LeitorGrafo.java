@@ -4,13 +4,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import com.brunomnsilva.smartgraph.graph.Graph;
-import com.brunomnsilva.smartgraph.graph.GraphEdgeList;
+import dev.vepo.openjgraph.graph.Graph;
 
 public class LeitorGrafo {
 
     public Graph<String, String> ler(Path arquivo) {
-        var grafo = new GraphEdgeList<String, String>();
+        var grafo = Graph.<String, String>newGraph();
         try {
             Files.readAllLines(arquivo)
                  .stream()
