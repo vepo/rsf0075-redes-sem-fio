@@ -60,7 +60,7 @@ Pelo Wireshark foi possível identificar o algoritmo usado pelo `tracert` para d
 
 O tempo de resposta pode ser calculado usando a própria mensagem envida, já que o Router coloca a mensagem original dentro da mensagem ICMP e cada pacote IP tem um identificador.
 
-![Print do Wireshark](../resources/tracert-2.png)
+![Print do Wireshark mostrando identificado do pacote IP](../resources/tracert-2.png)
 
 Como o IP é um protocolo da camada de Network e o TTL é parte do pacote IP, serão identificado Routers e não Switches.
 
