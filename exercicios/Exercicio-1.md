@@ -121,3 +121,5 @@ Essa foi uma rede criada para validar o uso dos pesos de enlace.
 Observe como o caminho escolhido passa por 2 e 4 para evitar a aresta com peso 5.
 
 ![Rede de exemplo](../resources/grafo-2.png)
+
+O código fonte para esse exericio pode ser encontrado em [vepo/rsf0075-redes-sem-fio](https://github.com/vepo/rsf0075-redes-sem-fio) e para biblioteca de grafos em [vepo/openjfx-graph](https://github.com/vepo/openjfx-graph).
