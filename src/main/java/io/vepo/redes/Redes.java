@@ -8,6 +8,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Logger;
 
 import dev.vepo.openjgraph.graph.Graph;
 import dev.vepo.openjgraph.graphview.SmartCircularSortedPlacementStrategy;
@@ -34,6 +35,7 @@ import javafx.stage.Stage;
 
 public class Redes extends Application {
 
+    private static Logger logger = Logger.getLogger(Redes.class.getName());
     private static final LeitorGrafo leitor = new LeitorGrafo();
     private AtomicReference<Graph<String, String>> loadedGraph = new AtomicReference<>();
 
@@ -70,12 +72,15 @@ public class Redes extends Application {
         var txtOrigem = new TextField();
         var txtDestino = new TextField();
         btnCaminho.setOnAction(action -> verCaminho(txtOrigem, txtDestino));
+        var btnClean = new Button("Limpar");
+        btnClean.setOnAction(action -> limpar());
         var controlador = new HBox(12,
                                    new Label("Origem: "),
                                    txtOrigem,
                                    new Label("Destino: "),
                                    txtDestino,
-                                   btnCaminho);
+                                   btnCaminho,
+                                   btnClean);
 
         controlador.setAlignment(Pos.CENTER);
         var root = new VBox(menuBar, graphView, controlador);
@@ -98,12 +103,17 @@ public class Redes extends Application {
         System.exit(0);
     }
 
+    private final AtomicReference<SmartGraphPanel<String, String>> graphView = new AtomicReference<>();
+
     private SmartGraphPanel<String, String> inicializaGrafo(Path arquivo) throws URISyntaxException {
         var strategy = new SmartCircularSortedPlacementStrategy();
-        var properties = new SmartGraphProperties(Redes.class.getResourceAsStream("/smartgraph.properties"));
-        return new SmartGraphPanel<>(loadedGraph.updateAndGet(__ -> leitor.ler(arquivo)), properties, strategy,
-                                     Redes.class.getResource("/smartgraph.css")
-                                                .toURI());
+        var panel = new SmartGraphPanel<>(loadedGraph.updateAndGet(__ -> leitor.ler(arquivo)), strategy);
+        graphView.set(panel);
+        return panel;
+    }
+
+    private void limpar() {
+        graphView.get().clearHighlight();
     }
 
     private void verCaminho(TextField txtOrigem, TextField txtDestino) {
@@ -124,6 +134,11 @@ public class Redes extends Application {
         if (!destinoVertex.isPresent()) {
             exibeErro("Calcular rota", "Destino selecionado não encontrado!");
         }
+
+        logger.info("Procurando caminho A -> B + " + origemVertex.get() + " "+ destinoVertex.get());
+        var path = loadedGraph.get().dijkstra(origemVertex.get(), destinoVertex.get());
+        logger.info("Procurando caminho A -> B + " + path);
+        graphView.get().highlight(path);
     }
 
     private void exibeErro(String titulo, String mensagem) {

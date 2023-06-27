@@ -42,7 +42,7 @@ public class LeitorGrafo {
                          grafo.insertVertex(line[1]);
                      }
 
-                     grafo.insertEdge(line[0], line[1], String.format("%s - %s", line[0], line[1]));
+                     grafo.insertEdge(line[0], line[1], String.format("%s - %s", line[0], line[1]), Double.parseDouble(line[2]));
                  });
         } catch (IOException e) {
             e.printStackTrace();
