@@ -106,7 +106,7 @@ Essa é a exibição da rede proposta:
 
 ![Rede proposta](../resources/grafo-1.png)
 
-Essa foi uma rede criada para validar o uso dos pesos de enlace. 
+Essa foi uma rede criada para validar o uso dos pesos de enlace.
 
 ```
 1 2 0.5

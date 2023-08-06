@@ -1,0 +1,121 @@
+<html>
+
+<head>
+    <style>
+        .mensagens {
+            overflow: auto;
+            white-space: nowrap;
+        }
+
+        .buttons {
+            display: flex;
+            width: 0;
+        }
+
+        .buttons span {
+            margin: auto;
+        }
+
+        .buttons button {
+            flex: 1;
+            margin: 0 5px;
+            border: solid 1px black;
+            border-radius: 5px;
+            max-width: 24px;
+            min-width: 24px;
+            height: 24px;
+        }
+    </style>
+    <script>
+        function addMensagem(mensagem) {
+            let divElm = document.getElementById("mensagens");
+            let msgDiv = document.createElement("div");
+            msgDiv.appendChild(document.createTextNode(mensagem));
+            divElm.appendChild(msgDiv);
+        }
+        function increaseFontSize() {
+            const currentFontSize = parseInt(document.body.style.fontSize) || 16;
+            const newFontSize = currentFontSize + 2; // Increase by 2px (you can adjust this value)
+
+            document.body.style.fontSize = newFontSize + 'px';
+        }
+        function decreaseFontSize() {
+            const currentFontSize = parseInt(document.body.style.fontSize) || 16;
+            const newFontSize = currentFontSize - 2; // Decrease by 2px (you can adjust this value)
+
+            document.body.style.fontSize = newFontSize + 'px';
+        }
+
+        function reset() {
+            let divElm = document.getElementById("mensagens");
+            if (divElm) {
+                while (divElm.firstChild) {
+                    divElm.removeChild(divElm.firstChild);
+                }
+            }
+
+            let routingTable = document.getElementById("routingPath");
+            if (routingTable) {
+                const oldEntries = routingTable.querySelectorAll("tr.row[source][destiny]");
+                for (const row of oldEntries) {
+                    row.remove();
+                }
+            }
+        }
+
+        function addRoute(origem, destino, distancia, rota) {
+            console.log(origem, destino, rota);
+            let routingTable = document.getElementById("routingPath");
+            let oldEntry = routingTable.querySelector(`tr.row[source="${origem}"][destiny="${destino}"]`);
+            if (oldEntry) {
+                oldEntry.parentNode.removeChild(oldEntry);
+            }
+            let row = document.createElement('tr');
+            row.classList.add('row');
+            row.setAttribute('source', origem);
+            row.setAttribute('destiny', destino);
+            
+
+            let cellSource = document.createElement('td');
+            cellSource.appendChild(document.createTextNode(origem));
+            row.appendChild(cellSource);
+
+            let cellDestiny = document.createElement('td');
+            cellDestiny.appendChild(document.createTextNode(destino));
+            row.appendChild(cellDestiny);
+
+            let cellDistancia = document.createElement('td');
+            cellDistancia.appendChild(document.createTextNode(distancia));
+            row.appendChild(cellDistancia);
+
+            let cellPath = document.createElement('td');
+            cellPath.appendChild(document.createTextNode(rota));
+            row.appendChild(cellPath);
+
+            routingTable.appendChild(row);
+        }
+    </script>
+</head>
+
+<body>
+    <h1>Rede sem Fio</h1>
+    <div class="buttons">
+        <span>Fonte:</span>
+        <button onclick="increaseFontSize()">+</button>
+        <button onclick="decreaseFontSize()">-</button>
+    </div>
+    <h2>Mensagens</h2>
+    <div class="mensagens" id="mensagens"></div>
+    <h2>Tabelas de Roteamento</h2>
+    <table id="routingPath">
+        <tr>
+            <th>Origem</th>
+            <th>Destino</th>
+            <th>Distancia</th>
+            <th>Caminho</th>
+        </tr>
+    </table>
+    <div id="tabelas"></div>
+</body>
+
+</html>

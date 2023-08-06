@@ -10,18 +10,34 @@
         <maven.compiler.release>20</maven.compiler.release>
         <maven.compiler.source>${maven.compiler.release}</maven.compiler.source>
         <maven.compiler.target>${maven.compiler.release}</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
-            <version>21-ea+21</version>
+            <version>21-ea+24</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-web</artifactId>
+            <version>21-ea+24</version>
         </dependency>
         <dependency>
             <groupId>dev.vepo</groupId>
             <artifactId>openjfx-graph</artifactId>
             <version>1.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.collections</groupId>
+            <artifactId>eclipse-collections-api</artifactId>
+            <version>11.1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.collections</groupId>
+            <artifactId>eclipse-collections</artifactId>
+            <version>11.1.0</version>
         </dependency>
 
         <!-- Tests -->
@@ -29,6 +45,12 @@
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <version>5.9.3</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>3.24.2</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
