@@ -21,7 +21,7 @@ public class RoteamentoTest {
         rede.insertEdge(vc, vd, "C-D", 1);
         rede.insertEdge(vd, ve, "D-E", 1);
         var roteamento = Roteamento.executa(rede, RoteamentoObserver.NOPObserver);
-        var nodeA = roteamento.getNode("A");
+        var nodeA = roteamento.node("A");
         assertThat(nodeA).as("Validando no A")
                          .isNotEmpty()
                          .hasValueSatisfying(a -> {
@@ -57,7 +57,7 @@ public class RoteamentoTest {
         rede.insertEdge(vc, vd, "C-D", 100);
         rede.insertEdge(vd, ve, "D-E", 1);
         var roteamento = Roteamento.executa(rede, RoteamentoObserver.NOPObserver);
-        var nodeA = roteamento.getNode("A");
+        var nodeA = roteamento.node("A");
         assertThat(nodeA).as("Validando no A")
                          .isNotEmpty()
                          .hasValueSatisfying(a -> {

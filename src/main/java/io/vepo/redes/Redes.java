@@ -52,7 +52,7 @@ public class Redes extends Application implements RoteamentoObserver {
     }
 
     private static Logger logger = Logger.getLogger(Redes.class.getName());
-    private static final LeitorGrafo leitor = new LeitorGrafo();
+    private final Historico historico = new Historico();
 
     public static void main(String[] args) {
         Runtime.getRuntime()
@@ -104,7 +104,16 @@ public class Redes extends Application implements RoteamentoObserver {
         btnClean.setOnAction(action -> limpar());
 
         var btnRoteamento = new Button("Roteamento");
-        btnRoteamento.setOnAction(action -> roteamento());
+        btnRoteamento.setOnAction(action -> {
+            btnRoteamento.setDisable(true);
+            reset();
+            Executors.newSingleThreadExecutor()
+                     .execute(() -> {
+                         var rotas = Roteamento.executa(loadedGraph.get(), this);
+                         historico.salva(rotas);
+                         runLater(() -> btnRoteamento.setDisable(false));
+                     });
+        });
 
         var controlador = new HBox(12,
                                    new Label("Origem: "),
@@ -117,8 +126,8 @@ public class Redes extends Application implements RoteamentoObserver {
 
         controlador.setAlignment(Pos.CENTER);
         var vwLog = new WebView();
-        vwLog.setMinWidth(350);
-        vwLog.setMaxWidth(350);
+        vwLog.setMinWidth(450);
+        vwLog.setMaxWidth(450);
         var mainArea = new HBox(graphView, vwLog);
         var root = new VBox(mnbApp, mainArea, controlador);
         mniAbrir.setOnAction(action -> atualizaGrafo(root, stage));
@@ -127,7 +136,7 @@ public class Redes extends Application implements RoteamentoObserver {
             var newGraphView = inicializaGrafo(Graph.random(Graph.<String, String>randomConfig()
                                                                  .nodeSize(config.getOne())
                                                                  .edgeProbability(config.getTwo())
-                                                                 .vertexGenerator(i -> String.format("Nó %05d", i))
+                                                                 .vertexGenerator(i -> String.format("%02d", i))
                                                                  .edgeGenerator((u, v) -> String.format("%s - %s", u,
                                                                                                         v))
                                                                  .allowSelfLoop(false)
@@ -174,7 +183,7 @@ public class Redes extends Application implements RoteamentoObserver {
     }
 
     private void addMessage(String message) {
-        runLater(()->{
+        runLater(() -> {
             JSObject window = (JSObject) engine.executeScript("window");
             window.setMember("msg", message);
             engine.executeScript("addMensagem(msg)");
@@ -188,7 +197,7 @@ public class Redes extends Application implements RoteamentoObserver {
 
     @Override
     public void routeFound(String srcNode, String dstNode, double distance, List<String> path) {
-        runLater(()->{
+        runLater(() -> {
             JSObject window = (JSObject) engine.executeScript("window");
             window.setMember("srcNode", srcNode);
             window.setMember("dstNode", dstNode);
@@ -200,14 +209,17 @@ public class Redes extends Application implements RoteamentoObserver {
 
     @Override
     public void message(String source, String destiny, Message message) {
-        // addMessage(message.toString());
-        try {
-            Files.write(Paths.get(".", "Mensagens.txt"),
-                        String.format("%s -> %s: %s\n", source, destiny, message).getBytes(),
-                        StandardOpenOption.APPEND,
-                        StandardOpenOption.CREATE);
-        } catch (IOException e) {
-            e.printStackTrace();
+        addMessage(message.toString());
+        synchronized (this) {
+            historico.salva(source, destiny, message);
+            try {
+                Files.write(Paths.get(".", "Mensagens.txt"),
+                            String.format("%s -> %s: %s\n", source, destiny, message).getBytes(),
+                            StandardOpenOption.APPEND,
+                            StandardOpenOption.CREATE);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -216,19 +228,15 @@ public class Redes extends Application implements RoteamentoObserver {
         Paths.get(".", "Mensagens.txt").toFile().delete();
     }
 
-    private void roteamento() {
-        reset();
-        Executors.newSingleThreadExecutor().execute(() -> Roteamento.executa(loadedGraph.get(), this));
-    }
-
     private SmartGraphPanel<String, String> inicializaGrafo(Path arquivo) throws URISyntaxException {
-        return inicializaGrafo(leitor.ler(arquivo));
+        return inicializaGrafo(Grafos.ler(arquivo));
     }
 
     private SmartGraphPanel<String, String> inicializaGrafo(Graph<String, String> graph) {
         var strategy = new SmartCircularSortedPlacementStrategy();
         var panel = new SmartGraphPanel<>(loadedGraph.updateAndGet(__ -> graph), strategy);
         graphView.set(panel);
+        historico.salva(graph);
         return panel;
     }
 

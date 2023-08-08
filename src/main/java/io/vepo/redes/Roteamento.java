@@ -16,7 +16,6 @@ import org.eclipse.collections.impl.tuple.Tuples;
 
 import dev.vepo.openjgraph.graph.Graph;
 import io.vepo.redes.protocol.Message;
-import io.vepo.redes.protocol.NodeDiscovery;
 import io.vepo.redes.protocol.RouteDiscovery;
 
 public class Roteamento {
@@ -25,7 +24,6 @@ public class Roteamento {
 
         private final String id;
         private final Set<Pair<Node, Double>> neighborhood;
-        private final Set<String> accessibleNodes;
         private final Map<String, List<String>> routingTable;
         private final Map<String, Double> routingDistance;
         private final RoteamentoObserver observer;
@@ -33,7 +31,6 @@ public class Roteamento {
         public Node(String id, RoteamentoObserver observer) {
             this.id = id;
             this.neighborhood = new HashSet<>();
-            this.accessibleNodes = new HashSet<>();
             this.routingTable = new HashMap<>();
             this.routingDistance = new HashMap<>();
             this.observer = observer;
@@ -44,8 +41,22 @@ public class Roteamento {
 
         }
 
+        public String id() {
+            return id;
+        }
+
+        public double distance(String destiny) {
+            return this.routingDistance.getOrDefault(destiny, Double.MAX_VALUE);
+        }
+
+        public List<String> path(String destiny) {
+            return this.routingTable.getOrDefault(destiny, Collections.emptyList());
+        }
+
+        public void cleanup() {
+        }
+
         public void startDiscovery() {
-            accessibleNodes.clear();
             sendNodeDiscovery();
         }
 
@@ -73,7 +84,7 @@ public class Roteamento {
         }
 
         public Set<String> accessibleNodes() {
-            return new HashSet<>(accessibleNodes);
+            return new HashSet<>(routingDistance.keySet());
         }
 
         public List<String> route(String node) {
@@ -90,41 +101,36 @@ public class Roteamento {
         }
 
         private void sendNodeDiscovery() {
-            neighborhood.forEach(n -> n.getOne().accept(id, new NodeDiscovery(id)));
+            neighborhood.forEach(n -> n.getOne()
+                                       .accept(id,
+                                               new RouteDiscovery(id, n.getTwo(), Arrays.asList(id, n.getOne().id))));
         }
 
         private void accept(String source, Message message) {
             observer.message(source, id, message);
-            if (message instanceof NodeDiscovery nd) {
-                if (!id.equals(nd.sourceId()) && !accessibleNodes.contains(nd.sourceId())) {
-                    observer.nodeFound(nd.sourceId(), id);
-                    accessibleNodes.add(nd.sourceId());
-                    neighborhood.forEach(n -> n.getOne().accept(id, nd));
-                    accessibleNodes.stream()
-                                   .forEach(dst -> neighborhood.forEach(n -> n.getOne().accept(id, new RouteDiscovery(id, dst, n.getTwo(), Arrays.asList(id, n.getOne().id)))));
-                }
-            } else if (message instanceof RouteDiscovery rd) {
-                if (id.equals(rd.destiny()) && (!routingTable.containsKey(rd.source()) || routingDistance.get(rd.source()) > rd.distance())) {
-                    var fullPath = new ArrayList<>(rd.path());
-                    Collections.reverse(fullPath);
-                    routingTable.put(rd.source(), fullPath);
+            if (message instanceof RouteDiscovery rd) {
+
+                if (!routingDistance.containsKey(rd.source()) || routingDistance.get(rd.source()) > rd.distance()) {
                     routingDistance.put(rd.source(), rd.distance());
-                    observer.routeFound(rd.destiny(), rd.source(), rd.distance(), fullPath);
-                } else {
+                    var path = new ArrayList<>(rd.path());
+                    Collections.reverse(path);
+                    routingTable.put(rd.source(), path);
+                    observer.routeFound(id, rd.source(), rd.distance(), path);
+
                     neighborhood.stream()
                                 .filter(n -> !rd.path().contains(n.getOne().id))
                                 .forEach(n -> {
-                                    var fullPath = new ArrayList<String>(rd.path().size() + 1);
-                                    fullPath.addAll(rd.path());
-                                    fullPath.add(n.getOne().id);
-                                    n.getOne()
-                                     .accept(id, new RouteDiscovery(rd.source(), rd.destiny(), rd.distance() + n.getTwo(), fullPath));
+                                    var newPath = new ArrayList<String>(rd.path().size() + 1);
+                                    newPath.addAll(rd.path());
+                                    newPath.add(n.getOne().id);
+                                    n.getOne().accept(id, new RouteDiscovery(rd.source(),
+                                                                             rd.distance() + n.getTwo(),
+                                                                             newPath));
                                 });
                 }
             }
         }
     }
-
 
     public static Roteamento executa(Graph<String, String> graph, RoteamentoObserver observer) {
         var nodes = new HashMap<String, Node>();
@@ -149,7 +155,11 @@ public class Roteamento {
         this.nodes = nodes;
     }
 
-    public Optional<Node> getNode(String nodeId) {
+    public Optional<Node> node(String nodeId) {
         return Optional.ofNullable(nodes.get(nodeId));
+    }
+
+    public List<Node> nodes() {
+        return new ArrayList<>(nodes.values());
     }
 }

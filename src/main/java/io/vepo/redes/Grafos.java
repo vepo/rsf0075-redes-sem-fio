@@ -1,14 +1,30 @@
 package io.vepo.redes;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 import dev.vepo.openjgraph.graph.Graph;
 
-public class LeitorGrafo {
+public class Grafos {
 
-    public Graph<String, String> ler(Path arquivo) {
+    private Grafos() {
+    }
+
+    public static void escrever(Path arquivo, Graph<String, String> grafo) {
+        try (PrintWriter writer = new PrintWriter(arquivo.toFile())) {
+            grafo.edges()
+                 .forEach(e -> writer.println(String.format("%s %s %f",
+                                                            e.vertexA().element(),
+                                                            e.vertexB().element(),
+                                                            e.weight())));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static Graph<String, String> ler(Path arquivo) {
         var grafo = Graph.<String, String>newGraph();
         try {
             Files.readAllLines(arquivo)
@@ -42,7 +58,8 @@ public class LeitorGrafo {
                          grafo.insertVertex(line[1]);
                      }
 
-                     grafo.insertEdge(line[0], line[1], String.format("%s - %s", line[0], line[1]), Double.parseDouble(line[2]));
+                     grafo.insertEdge(line[0], line[1], String.format("%s - %s", line[0], line[1]),
+                                      Double.parseDouble(line[2]));
                  });
         } catch (IOException e) {
             e.printStackTrace();
