@@ -56,16 +56,20 @@ public class Historico {
             arquivo.delete();
         }
         try (PrintWriter writer = new PrintWriter(arquivo)) {
+            writer.println("source\tdestiny\tdistance\tbandwidth\tdelay\tloss-probability\tpath");
             rotas.nodes()
                  .stream()
                  .sorted(Comparator.comparing(Node::id))
                  .forEachOrdered(origin -> origin.accessibleNodes()
                                                  .stream()
                                                  .sorted()
-                                                 .forEachOrdered(destiny -> writer.println(String.format("%s %s %f %s",
+                                                 .forEachOrdered(destiny -> writer.println(String.format("%s\t%s\t%.2f\t%d\t%.2f\t%.2f\t%s",
                                                                                                          origin.id(),
                                                                                                          destiny,
                                                                                                          origin.distance(destiny),
+                                                                                                         origin.bandwidth(destiny),
+                                                                                                         origin.delay(destiny),
+                                                                                                         origin.lossProbability(destiny),
                                                                                                          String.format("[%s]",
                                                                                                                        origin.path(destiny)
                                                                                                                              .stream()

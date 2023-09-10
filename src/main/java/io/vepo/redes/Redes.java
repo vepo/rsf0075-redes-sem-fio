@@ -11,6 +11,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.security.SecureRandom;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
@@ -18,6 +20,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import dev.vepo.openjgraph.graph.Graph;
+import dev.vepo.openjgraph.graph.Graph.EdgeInfo;
 import dev.vepo.openjgraph.graphview.SmartCircularSortedPlacementStrategy;
 import dev.vepo.openjgraph.graphview.SmartGraphPanel;
 import io.vepo.redes.protocol.Message;
@@ -126,19 +129,28 @@ public class Redes extends Application implements RoteamentoObserver {
 
         controlador.setAlignment(Pos.CENTER);
         var vwLog = new WebView();
-        vwLog.setMinWidth(450);
-        vwLog.setMaxWidth(450);
+        vwLog.setMinWidth(750);
+        vwLog.setMaxWidth(750);
         var mainArea = new HBox(graphView, vwLog);
         var root = new VBox(mnbApp, mainArea, controlador);
         mniAbrir.setOnAction(action -> atualizaGrafo(root, stage));
         mniAleatorio.setOnAction(action -> {
             var config = RandomWindow.display(stage);
+            var random = new SecureRandom();
             var newGraphView = inicializaGrafo(Graph.random(Graph.<String, String>randomConfig()
                                                                  .nodeSize(config.getOne())
                                                                  .edgeProbability(config.getTwo())
                                                                  .vertexGenerator(i -> String.format("%02d", i))
-                                                                 .edgeGenerator((u, v) -> String.format("%s - %s", u,
-                                                                                                        v))
+                                                                 .edgeGenerator((u, v) -> {
+                                                                     var weight = 0.5 + random.nextDouble();
+                                                                     var properties = new HashMap<String, Object>();
+                                                                     properties.put(Roteamento.BANDWIDTH, (int) (100 * weight));
+                                                                     properties.put(Roteamento.DELAY, (double) (10 * weight));
+                                                                     properties.put(Roteamento.LOSS_PROBABILITY , random.nextFloat(0.1f));
+                                                                     return new EdgeInfo<>(String.format("%s - %s", u, v),
+                                                                                           weight,
+                                                                                           properties);
+                                                                 })
                                                                  .allowSelfLoop(false)
                                                                  .build()));
 
