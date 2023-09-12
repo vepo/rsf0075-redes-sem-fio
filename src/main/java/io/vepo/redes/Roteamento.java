@@ -157,7 +157,7 @@ public class Roteamento {
                                                                                               .and(metrics.lossProbability())
                                                                                               .get(),
                                                                              MetricPropagation.fromConcave(rd.bandwidth())
-                                                                                              .and(metrics.bandwidth)
+                                                                                              .and(metrics.bandwidth())
                                                                                               .get(),
                                                                              newPath));
                                 });

@@ -13,13 +13,20 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.security.SecureRandom;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import org.eclipse.collections.api.tuple.Pair;
+import org.eclipse.collections.impl.tuple.Tuples;
+
 import dev.vepo.openjgraph.graph.Graph;
+import dev.vepo.openjgraph.graph.Vertex;
 import dev.vepo.openjgraph.graph.Graph.EdgeInfo;
 import dev.vepo.openjgraph.graphview.SmartCircularSortedPlacementStrategy;
 import dev.vepo.openjgraph.graphview.SmartGraphPanel;
@@ -118,6 +125,8 @@ public class Redes extends Application implements RoteamentoObserver {
                      });
         });
 
+        var btnDeslocar = new Button("Deslocar");
+
         var controlador = new HBox(12,
                                    new Label("Origem: "),
                                    txtOrigem,
@@ -125,7 +134,8 @@ public class Redes extends Application implements RoteamentoObserver {
                                    txtDestino,
                                    btnCaminho,
                                    btnClean,
-                                   btnRoteamento);
+                                   btnRoteamento,
+                                   btnDeslocar);
 
         controlador.setAlignment(Pos.CENTER);
         var vwLog = new WebView();
@@ -133,7 +143,8 @@ public class Redes extends Application implements RoteamentoObserver {
         vwLog.setMaxWidth(750);
         var mainArea = new HBox(graphView, vwLog);
         var root = new VBox(mnbApp, mainArea, controlador);
-        mniAbrir.setOnAction(action -> atualizaGrafo(root, stage));
+        mniAbrir.setOnAction(action -> atualizaGrafo(mainArea, stage));
+        btnDeslocar.setOnAction(action -> deslocar(mainArea));
         mniAleatorio.setOnAction(action -> {
             var config = RandomWindow.display(stage);
             var random = new SecureRandom();
@@ -144,10 +155,14 @@ public class Redes extends Application implements RoteamentoObserver {
                                                                  .edgeGenerator((u, v) -> {
                                                                      var weight = 0.5 + random.nextDouble();
                                                                      var properties = new HashMap<String, Object>();
-                                                                     properties.put(Roteamento.BANDWIDTH, (int) (100 * weight));
-                                                                     properties.put(Roteamento.DELAY, (double) (10 * weight));
-                                                                     properties.put(Roteamento.LOSS_PROBABILITY , random.nextFloat(0.1f));
-                                                                     return new EdgeInfo<>(String.format("%s - %s", u, v),
+                                                                     properties.put(Roteamento.BANDWIDTH,
+                                                                                    (int) (100 * weight));
+                                                                     properties.put(Roteamento.DELAY,
+                                                                                    (double) (10 * weight));
+                                                                     properties.put(Roteamento.LOSS_PROBABILITY,
+                                                                                    random.nextFloat(0.1f));
+                                                                     return new EdgeInfo<>(String.format("%s - %s", u,
+                                                                                                         v),
                                                                                            weight,
                                                                                            properties);
                                                                  })
@@ -186,6 +201,52 @@ public class Redes extends Application implements RoteamentoObserver {
                                            }
                                        """);
               });
+    }
+
+    private void deslocar(Pane root) {
+        var oldGrafo = loadedGraph.get();
+        if (Objects.nonNull(oldGrafo)) {
+            var random = new SecureRandom();
+            var arestasPossiveis = new HashSet<Pair<Vertex<String, String>, Vertex<String, String>>>();
+            oldGrafo.vertices()
+                    .forEach(u -> oldGrafo.vertices()
+                                          .forEach(v -> {
+                                              if (u != v &&
+                                                      !arestasPossiveis.contains(Tuples.pair(u, v)) &&
+                                                      !arestasPossiveis.contains(Tuples.pair(v, u))) {
+                                                  arestasPossiveis.add(Tuples.pair(u, v));
+                                              }
+                                          }));
+            arestasPossiveis.forEach(pair -> {
+                if (random.nextFloat() < 0.1) {
+                    oldGrafo.edge(pair.getOne(), pair.getTwo())
+                            .ifPresentOrElse(oldGrafo::removeEdge, () -> {
+                                var weight = 0.5 + random.nextDouble();
+                                var properties = new HashMap<String, Object>();
+                                properties.put(Roteamento.BANDWIDTH, (int) (100 * weight));
+                                properties.put(Roteamento.DELAY, (double) (10 * weight));
+                                properties.put(Roteamento.LOSS_PROBABILITY, random.nextFloat(0.1f));
+                                oldGrafo.insertEdge(pair.getOne(),
+                                                    pair.getTwo(),
+                                                    String.format("%s - %s", pair.getOne().element(),
+                                                                  pair.getTwo().element()),
+                                                    weight,
+                                                    properties);
+                            });
+                }
+            });
+            var newGraphView = inicializaGrafo(oldGrafo);
+
+            setVgrow(newGraphView, Priority.ALWAYS);
+            setHgrow(newGraphView, Priority.ALWAYS);
+            root.getChildren().replaceAll(node -> node instanceof SmartGraphPanel ? newGraphView : node);
+            runLater(() -> {
+                newGraphView.setAutomaticLayout(true);
+                newGraphView.init();
+                root.layout();
+            });
+        }
+
     }
 
     @Override
@@ -299,10 +360,12 @@ public class Redes extends Application implements RoteamentoObserver {
                 var newGraphView = inicializaGrafo(selectedFile.toPath());
 
                 setVgrow(newGraphView, Priority.ALWAYS);
+                setHgrow(newGraphView, Priority.ALWAYS);
                 root.getChildren().replaceAll(node -> node instanceof SmartGraphPanel ? newGraphView : node);
                 runLater(() -> {
                     newGraphView.setAutomaticLayout(true);
                     newGraphView.init();
+                    root.layout();
                 });
             } catch (URISyntaxException e) {
                 var errorAlert = new Alert(AlertType.ERROR);

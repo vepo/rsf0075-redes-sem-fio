@@ -16,13 +16,22 @@ public class Grafos {
     public static void escrever(Path arquivo, Graph<String, String> grafo) {
         try (PrintWriter writer = new PrintWriter(arquivo.toFile())) {
             grafo.edges()
-                 .forEach(e -> writer.println(String.format("%s %s %f %d %.2f %.3f",
-                                                            e.vertexA().element(),
-                                                            e.vertexB().element(),
-                                                            e.weight(),
-                                                            e.properties().get(Roteamento.BANDWIDTH),
-                                                            e.properties().get(Roteamento.DELAY),
-                                                            e.properties().get(Roteamento.LOSS_PROBABILITY))));
+                 .forEach(e -> {
+                     if (e.properties().isEmpty()) {
+                         writer.println(String.format("%s %s %f",
+                                                      e.vertexA().element(),
+                                                      e.vertexB().element(),
+                                                      e.weight()));
+                     } else {
+                         writer.println(String.format("%s %s %f %d %.2f %.3f",
+                                                      e.vertexA().element(),
+                                                      e.vertexB().element(),
+                                                      e.weight(),
+                                                      e.properties().get(Roteamento.BANDWIDTH),
+                                                      e.properties().get(Roteamento.DELAY),
+                                                      e.properties().get(Roteamento.LOSS_PROBABILITY)));
+                     }
+                 });
         } catch (IOException e) {
             e.printStackTrace();
         }
